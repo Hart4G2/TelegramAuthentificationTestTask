@@ -1,5 +1,6 @@
-package com.testtask.tesktask;
+package com.testtask.tesktask.service;
 
+import com.testtask.tesktask.model.TelegramAuthData;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;

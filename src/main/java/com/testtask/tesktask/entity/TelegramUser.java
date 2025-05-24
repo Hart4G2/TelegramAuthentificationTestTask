@@ -1,4 +1,4 @@
-package com.testtask.tesktask;
+package com.testtask.tesktask.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

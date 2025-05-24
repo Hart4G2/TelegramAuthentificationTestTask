@@ -1,4 +1,4 @@
-package com.testtask.tesktask;
+package com.testtask.tesktask.model;
 
 import lombok.Getter;
 import lombok.Setter;

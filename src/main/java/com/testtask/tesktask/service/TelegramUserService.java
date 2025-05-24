@@ -1,5 +1,8 @@
-package com.testtask.tesktask;
+package com.testtask.tesktask.service;
 
+import com.testtask.tesktask.TelegramUserRepository;
+import com.testtask.tesktask.entity.TelegramUser;
+import com.testtask.tesktask.model.TelegramAuthData;
 import org.springframework.stereotype.Service;
 
 @Service
