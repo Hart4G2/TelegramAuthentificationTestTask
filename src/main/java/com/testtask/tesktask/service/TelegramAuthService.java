@@ -1,62 +1,59 @@
 package com.testtask.tesktask.service;
 
-import com.testtask.tesktask.model.TelegramAuthData;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.TreeMap;
 
 @Service
 public class TelegramAuthService {
 
-    private final String botToken = "7876754513:AAEtnUIHtSuwj2I-CDJ1-IOOj98f26nvtAQ"; // bot API
+    private final String BOT_TOKEN = "8090162327:AAHS6tDcYd2MqCz5Z8jK2QABgqDUSQTid28";
 
-    public boolean isValidAuthData(TelegramAuthData authData) {
-        Map<String, String> dataCheck = getStringStringMap(authData);
+    public boolean verifyTelegramWebAppData(Map<String, String> initData) {
+        String receivedHash = initData.remove("hash").replaceAll("[\"}]", "").trim();
 
-        List<String> dataCheckArr = dataCheck.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> e.getKey() + "=" + e.getValue())
-                .collect(Collectors.toList());
-        String dataCheckString = String.join("\n", dataCheckArr);
+        String dataCheckString = buildDataCheckString(initData);
 
+        byte[] secretKeyBytes = generateHMACBytes(BOT_TOKEN, "WebAppData");
+        byte[] calcBytes = generateHMACBytes(dataCheckString, secretKeyBytes);
+        String calculatedHash = bytesToHex(calcBytes);
+
+        return receivedHash.equals(calculatedHash);
+    }
+
+    private String buildDataCheckString(Map<String, String> params) {
+        StringBuilder sb = new StringBuilder();
+        params.forEach((key, value) ->
+                sb.append(key).append("=").append(value).append("\n")
+        );
+        return sb.toString().trim();
+    }
+
+    private byte[] generateHMACBytes(String message, byte[] key) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] key = digest.digest(botToken.getBytes(StandardCharsets.UTF_8));
-
-            Mac sha256HMAC = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKey = new SecretKeySpec(key, "HmacSHA256");
-            sha256HMAC.init(secretKey);
-            byte[] hashBytes = sha256HMAC.doFinal(dataCheckString.getBytes(StandardCharsets.UTF_8));
-
-            StringBuilder hashBuilder = new StringBuilder();
-            for (byte b : hashBytes) {
-                hashBuilder.append(String.format("%02x", b));
-            }
-            String computedHash = hashBuilder.toString();
-
-            return computedHash.equals(authData.getHash());
+            SecretKeySpec keySpec = new SecretKeySpec(key, "HmacSHA256");
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(keySpec);
+            return mac.doFinal(message.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            throw new RuntimeException("Ошибка генерации HMAC", e);
         }
     }
 
-    private static Map<String, String> getStringStringMap(TelegramAuthData authData) {
-        Map<String, String> dataCheck = new HashMap<>();
-        if (authData.getId() != null) dataCheck.put("id", authData.getId().toString());
-        if (authData.getFirstName() != null) dataCheck.put("first_name", authData.getFirstName());
-        if (authData.getLastName() != null) dataCheck.put("last_name", authData.getLastName());
-        if (authData.getUsername() != null) dataCheck.put("username", authData.getUsername());
-        if (authData.getPhotoUrl() != null) dataCheck.put("photo_url", authData.getPhotoUrl());
-        if (authData.getAuthDate() != null) dataCheck.put("auth_date", authData.getAuthDate().toString());
-        return dataCheck;
+    private byte[] generateHMACBytes(String message, String key) {
+        return generateHMACBytes(message, key.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }
-

@@ -2,6 +2,9 @@
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Главная страница</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -20,34 +23,21 @@
     <h1>Идет аутентификация через Telegram...</h1>
     <script>
         const initData = Telegram.WebApp.initData;
-        if (initData) {
-            const params = new URLSearchParams(initData);
-            const data = {};
-            for (const [key, value] of params.entries()) {
-                data[key] = value;
-            }
-            // Отправляем POST-запрос для аутентификации
-            fetch('/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+
+        fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ initData })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Ответ сервера:", data);
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
             })
-                .then(response => {
-                    if (response.ok) return response.json();
-                    else throw new Error("Неверная аутентификация");
-                })
-                .then(result => {
-                    if (result.redirect) {
-                        window.location.href = result.redirect;
-                    }
-                })
-                .catch(e => {
-                    console.error("Ошибка аутентификации", e);
-                    document.body.innerHTML = "<p>Ошибка аутентификации. Попробуйте еще раз.</p>";
-                });
-        } else {
-            document.body.innerHTML = "<p>Данные аутентификации не найдены. Запустите приложение через Telegram.</p>";
-        }
+            .catch(error => console.error("Ошибка:", error));
+
     </script>
 </div>
 </body>
